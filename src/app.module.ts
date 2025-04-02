@@ -3,19 +3,27 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthApp } from './auth.entities';
+import { JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
+// import { jwtConstants } from './constants';
+import { ConfigModule } from '@nestjs/config';
+import { dataSource } from './auth.env';
+
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'shaf123',
-      database: 'postgres',
-      entities: [AuthApp],
-      synchronize: true,
-    }),TypeOrmModule.forFeature([AuthApp]),
+    TypeOrmModule.forRoot(dataSource),
+    TypeOrmModule.forFeature([AuthApp]),
+    ConfigModule.forRoot({
+        isGlobal:true,
+        envFilePath: '.env',
+    }),
+    JwtModule.register({
+      global: true,
+      secret: process.env.SECRET,
+      signOptions: { expiresIn: process.env.SIGN_OPTIONS },
+    }),
   ],
+
   controllers: [AppController],
   providers: [AppService],
   

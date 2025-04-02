@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Req } from '@nestjs/common';
 import { IAuth } from './auth.interface';
 import { generateID } from '@jetit/id';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository} from 'typeorm';
 import { AuthApp } from './auth.entities';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { format, addDays, differenceInDays, parseISO } from 'date-fns';
 
 
 @Injectable()
@@ -13,8 +16,11 @@ export class AppService {
   
   constructor(
     @InjectRepository(AuthApp)
-    private authEntity: Repository<AuthApp>,
+     private authEntity: Repository<AuthApp>,
+    private jwtService: JwtService,
+    private configService:ConfigService,
   ){}
+  
   // getHello(): string {
   //   return 'Hello World!';
   // }
@@ -43,27 +49,65 @@ export class AppService {
     }
     
   }
-  async checkUser(id:string,data:IAuth){
+  async checkUser(data:any){
     try{
-      const find=await this.authEntity.findOne({where:{id}})
-      // const oldPass=find?.password
-      console.log(find)
-      const pass=data
-      //  const saltRounds=10;
-      //  const password= await bcrypt.hash(data,saltRounds)
-    //  const oldPass= await this.authEntity()
-       const match = bcrypt.compare(pass,find)
-      // const p= await this.authEntity.find({where:{password:data.password}})
-      // console.log(match)
-       console.log(match)
+      const details=await this.authEntity.findOne({where:{username:data.username}})
+      console.log(details)
+
+        const oldPass:any=details?.password
+        const password=data.password
+         const match =await bcrypt.compare(password, oldPass)
+         console.log(match)
+      
+      
+      if(match === true){
+        return {status:"SUCCESS",message:"The passwords match"}
+      }
+      else{
+        throw new Error("Invalid Password...")
+      }
+      
     }
     catch(e){
       return `Request failed with error:  ${e.message}`
     }
-      // const oldPass= await this.authEntity.findOne({where:{password}});
-      // console.log(oldPass)
-      // const match=bcrypt.compare(password)
   }
+
+  async allUser(){
+    try{
+      const allData= await this.authEntity.find({where:{delete:false}})
+      return {status:'SUCCESS',message:'All the user details are listed successfully',data:allData}
+    }
+    catch(e){
+      return `request failed with error:  ${e.message}`
+    }
+  }
+
+  async updateUser(id:string,data:any){
+    try{
+      switch(true){
+        case typeof data.username !== "string":
+          throw new Error("The username should be a string")
+        case typeof data.password !== "string":
+          throw new Error("The password should be a string")
+      }
+      const check=await this.authEntity.findOne({where:{id}})
+      if(!check)throw new Error("User not found")
+      console.log(check)
+      const username=data.username
+      const pass=data.password
+      const saltRounds=10;
+      const password= await bcrypt.hash(pass,saltRounds)
+      const details={id,...data,password}
+      const update= await this.authEntity.update({id},details)
+      // console.log(update)
+      return {status:'SUCCESS',message:'Updated Successfully',details}
+    }
+    catch(e){
+      return `request failed with error:  ${e.message}`
+    }
+  }
+
   async deleteUser(id:string){
     try{
       await this.authEntity.findOne({where:{id}})
@@ -75,8 +119,61 @@ export class AppService {
     return `Request failed with error:  ${e.message}`
     }
 }
+async logIn(data:any){
+  try{
+    const details=await this.authEntity.findOne({where:{username:data.username}})
+    console.log(details)
 
- 
+      const oldPass:any=details?.password
+      const password=data.password
+      const match =await bcrypt.compare(password, oldPass)
+      //  console.log(match)
+    if(match === true){
+      const payload={id:details?.id,password:password,username:details?.username}
+      const token= await this.jwtService.signAsync(payload,{secret:'secret'})
+        // console.log(token)
+      return {status:"SUCCESS",message:"JWT Token Generated",token:token}
+      // return {status:"SUCCESS",message:"The passwords match"}
+    }
+    else{
+      throw new Error("Invalid Password...")
+    }
+    
+  }
+  catch(e){
+    return `Request failed with error:  ${e.message}`
+  }
+}
+
+async checkLogIn(data:any){
+  try{
+    const token=data
+    console.log("data---->",data)
+    const new_token:string=token.authorization
+    //  console.log("token------>",new_token)
+    const new_token1:string=new_token.replace('Bearer','').trim()
+    //  console.log(new_token1)
+    const decode=this.jwtService.verify(new_token1,{secret:'secret'})
+    console.log(decode)
+     const issued=new Date(decode.iat*1000)
+     console.log("Issued Date:",format(issued,'dd-MM-yyyy hh-mm-ss'))
+     const expires=new Date(decode.exp*1000)
+     console.log("Expired Date: ",format(expires,'dd-MM-yyyy hh-mm-ss'))
+    const current=new Date()
+    console.log("Current Date: ",format(current,'dd-MM-yyyy hh-mm-ss'))
+     if(expires < current){
+      throw new Error("Time expired")
+     }
+    //  const difference = expiresAt.getTime() - issuedAt.getTime();
+    //  const new_diff=new Date(difference*1000)
+    
+    return {status:'SUCCESS',message:"The tokens are valid"}
+
+  }
+  catch(e){
+    return `Request failed with error:  ${e.message}`
+  }
+}
 }
 
 
