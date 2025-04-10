@@ -167,11 +167,27 @@ async checkLogIn(data:any){
     //  const difference = expiresAt.getTime() - issuedAt.getTime();
     //  const new_diff=new Date(difference*1000)
     
-    return {status:'SUCCESS',message:"The tokens are valid"}
+    return {status:'SUCCESS',message:"The tokens are valid",data:{userId:decode.id}}
 
   }
   catch(e){
     return `Request failed with error:  ${e.message}`
+  }
+}
+
+async forgotPassword(id:string,data:any){
+  try{
+    const check=await this.authEntity.findOne({where:{id}})
+      if(!check)throw new Error("User not found")
+    const newPass=data.password
+    console.log(newPass)
+    const saltRounds=10;
+    const password= await bcrypt.hash(newPass,saltRounds)
+    const update= await this.authEntity.update({id},{password:password})
+    return {status:'SUCCESS',message:'Password updated successfully'}
+  }
+  catch(e){
+     return `Request failed with error:  ${e.message}`
   }
 }
 }

@@ -33,7 +33,6 @@ export class AppController {
   }
   @HttpCode(HttpStatus.OK)
   @Get('logIn/')
-  // @UseGuards(AuthGuard())
   log_In(@Body() data:any){
     return this.appService.logIn(data)
   }
@@ -42,5 +41,11 @@ export class AppController {
     // console.log('data====>>',data)
     return await this.appService.checkLogIn(data)
   }
+
+@Put('forgot/:id')
+async forgotPass(@Param() params:{id:string},@Body() data:any){
+  return await this.appService.forgotPassword(params.id,data)
+}
+
 }
 
