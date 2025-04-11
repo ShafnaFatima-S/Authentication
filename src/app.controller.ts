@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, Headers, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Headers, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { IAuth } from './auth.interface';
 import { AuthGuard } from '@nestjs/passport';
@@ -32,9 +32,16 @@ export class AppController {
     return this.appService.deleteUser(params.id)
   }
   @HttpCode(HttpStatus.OK)
-  @Get('logIn/')
-  log_In(@Body() data:any){
-    return this.appService.logIn(data)
+  @Get('logIn')
+  log_In(@Query('username')username:string,@Query('password')password:string){
+    try{
+      console.log('data==========>>',{username,password})
+      return this.appService.logIn({username,password})
+    }
+    catch(e){
+      return {status:"ERROR",message:`Request failed with error:  ${e.message}`}
+    }
+    
   }
   @Get('checkLogIn/')
   async checkLogIn( @Headers() data:any){

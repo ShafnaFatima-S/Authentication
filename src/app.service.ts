@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { format, addDays, differenceInDays, parseISO } from 'date-fns';
+import { error } from 'console';
 
 
 @Injectable()
@@ -119,11 +120,11 @@ export class AppService {
     return `Request failed with error:  ${e.message}`
     }
 }
-async logIn(data:any){
+async logIn(data:{username:string,password:string}){
   try{
     const details=await this.authEntity.findOne({where:{username:data.username}})
     console.log(details)
-
+    if(!details) throw new Error("Incorrect username and password!")
       const oldPass:any=details?.password
       const password=data.password
       const match =await bcrypt.compare(password, oldPass)
@@ -141,7 +142,8 @@ async logIn(data:any){
     
   }
   catch(e){
-    return `Request failed with error:  ${e.message}`
+    // return `Request failed with error:  ${e.message}`
+    return {status:"ERROR",message:`Request failed with error:  ${e.message}`}
   }
 }
 
