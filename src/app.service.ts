@@ -128,6 +128,7 @@ async logIn(data:{username:string,password:string}){
       const oldPass:any=details?.password
       const password=data.password
       const match =await bcrypt.compare(password, oldPass)
+      
       //  console.log(match)
     if(match === true){
       const payload={id:details?.id,password:password,username:details?.username}
