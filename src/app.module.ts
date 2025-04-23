@@ -20,7 +20,7 @@ import { dataSource } from './auth.env';
     JwtModule.register({
       global: true,
       secret: process.env.SECRET,
-      signOptions: { expiresIn: process.env.SIGN_OPTIONS },
+      signOptions: { expiresIn: process.env.EXPIRY },
     }),
   ],
 
