@@ -25,18 +25,18 @@ export class AppService {
   // getHello(): string {
   //   return 'Hello World!';
   // }
- async createUser(inData:IAuth){
+ async createUser(data:{username:string,password:string}){
     try{
       switch(true){
-        case typeof inData.username !== "string":
+        case typeof data.username !== "string":
           throw new Error("The username should be a string")
-        case typeof inData.password !== "string":
+        case typeof data.password !== "string":
           throw new Error("The password should be a string")
         
       }
       const id:  string =`E_${generateID('HEX')}`
-      const username=inData.username
-      const pass=inData.password
+      const username=data.username
+      const pass=data.password
       const saltRounds=10;
       const password= await bcrypt.hash(pass,saltRounds)
       console.log(password)
@@ -133,7 +133,7 @@ async logIn(data:{username:string,password:string}){
     if(match === true){
       const payload={id:details?.id,password:password,username:details?.username}
       const token= await this.jwtService.signAsync(payload,{secret:'secret'})
-        // console.log(token)
+       console.log("Jwt token---------->",token)
       return {status:"SUCCESS",message:"JWT Token Generated",token:token}
       // return {status:"SUCCESS",message:"The passwords match"}
     }
@@ -178,15 +178,16 @@ async checkLogIn(data:any){
   }
 }
 
-async forgotPassword(id:string,data:any){
+async forgotPassword(data:{username:string,password:string}){
   try{
-    const check=await this.authEntity.findOne({where:{id}})
+    const check=await this.authEntity.findOne({where:{username:data.username}})
       if(!check)throw new Error("User not found")
+    const username=data.username
     const newPass=data.password
-    console.log(newPass)
+    console.log("newPass-->",newPass)
     const saltRounds=10;
     const password= await bcrypt.hash(newPass,saltRounds)
-    const update= await this.authEntity.update({id},{password:password})
+    const update= await this.authEntity.update({username:username},{password:password})
     return {status:'SUCCESS',message:'Password updated successfully'}
   }
   catch(e){
