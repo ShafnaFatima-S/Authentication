@@ -12,8 +12,15 @@ export class AppController {
   //   return this.appService.getHello();
   // }
   @Post('createUser')
-  create_Auth(@Body() createUser:IAuth){
-    return this.appService.createUser(createUser);
+  create_Auth(@Query('username')username:string,@Query('password')password:string){
+    try{
+      console.log('data==========>>',{username,password})
+      return this.appService.createUser({username,password});
+    }
+    
+    catch(e){
+      return {status:"ERROR",message:`Request failed with error:  ${e.message}`}
+    }
   }
   @Get('checkUser/')
   check_Auth(@Body() data:any){
@@ -49,9 +56,9 @@ export class AppController {
     return await this.appService.checkLogIn(data)
   }
 
-@Put('forgot/:id')
-async forgotPass(@Param() params:{id:string},@Body() data:any){
-  return await this.appService.forgotPassword(params.id,data)
+@Put('forgot')
+async forgotPass(@Query('username')username:string,@Query('password')password:string){
+  return await this.appService.forgotPassword({username,password})
 }
 
 }
